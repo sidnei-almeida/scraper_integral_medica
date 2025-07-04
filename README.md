@@ -1,6 +1,11 @@
 # 🚀 Scraper Integral Médica - Dados Nutricionais
 
-Coleta dados nutricionais de **TODOS** os produtos da Integral Médica de forma automatizada e organizada.
+[![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](https://github.com/sidnei-almeida/scraper_integral_medica)
+[![Status](https://img.shields.io/badge/status-active-brightgreen.svg)](https://github.com/sidnei-almeida/scraper_integral_medica/commits/main)
+
+> 🧬 Coleta dados nutricionais de **TODOS** os produtos da Integral Médica de forma automatizada e organizada.
 
 ## 📋 O que faz este programa?
 
@@ -28,7 +33,7 @@ Coleta dados nutricionais de **TODOS** os produtos da Integral Médica de forma 
 
 ### 1. Baixar o projeto
 ```bash
-git clone <url-do-repositorio>
+git clone https://github.com/sidnei-almeida/scraper_integral_medica.git
 cd scraper_integral_medica
 ```
 
@@ -106,6 +111,7 @@ Após a execução, você terá:
 - **openpyxl** - Geração de arquivos Excel
 - **Selenium** - Automação do navegador
 - **BeautifulSoup** - Parsing de HTML
+- **WebDriver Manager** - Gerenciamento automático de drivers
 
 ## ⚙️ Configurações Automáticas
 
@@ -184,10 +190,11 @@ $ python main.py
 
 Este projeto é open source! Para contribuir:
 
-1. Faça fork do repositório
-2. Crie uma branch para sua feature
-3. Commit suas mudanças
-4. Abra um Pull Request
+1. Faça fork do repositório em [GitHub](https://github.com/sidnei-almeida/scraper_integral_medica)
+2. Crie uma branch para sua feature (`git checkout -b feature/nova-feature`)
+3. Commit suas mudanças (`git commit -am 'Adiciona nova feature'`)
+4. Push para a branch (`git push origin feature/nova-feature`)
+5. Abra um [Pull Request](https://github.com/sidnei-almeida/scraper_integral_medica/pulls)
 
 ## 📄 Licença
 
@@ -201,30 +208,6 @@ Este projeto é apenas para fins educacionais e de pesquisa. Respeite os termos 
 - **Dados pessoais** - Este scraper não coleta dados pessoais
 
 ---
-
-## 🎉 Resumo para Pressa
-
-**Para usar:**
-1. `pip install -r requirements.txt`
-2. `python main.py`
-3. Aguarde e encontre os dados em `dados/csv/`
-
-**Pronto!** 🚀
-
-## 🧬 Scraper Integral Médica
-
-## 📋 Descrição
-
-Este projeto é um scraper automatizado para coletar dados nutricionais dos produtos da **Integral Médica**. O scraper navega pelo site, coleta URLs dos produtos e extrai informações nutricionais detalhadas, salvando os dados em formato CSV e Excel.
-
-## 🚀 Funcionalidades
-
-- **Coleta de URLs**: Navega pela página de produtos e coleta todos os links
-- **Extração de dados nutricionais**: Extrai informações como calorias, proteínas, carboidratos, etc.
-- **Salvamento múltiplo**: Salva em CSV e Excel automaticamente
-- **Logs detalhados**: Registra todo o processo para monitoramento
-- **Interface amigável**: Menu interativo para escolher ações
-- **Compatibilidade multiplataforma**: Funciona em Windows, Linux e macOS
 
 ## 💻 Compatibilidade
 
@@ -240,7 +223,7 @@ O projeto usa **WebDriver Manager** para garantir compatibilidade:
 - ✅ Sem necessidade de configuração manual
 - ✅ Atualização automática de drivers
 
-## 📦 Instalação
+## 📦 Instalação Avançada
 
 ### 🪟 Windows (Instalação Automática)
 
@@ -264,7 +247,7 @@ python teste_windows.py
 python main.py
 ```
 
-## 🎯 Uso
+## 🎯 Uso Avançado
 
 ### Execução Principal
 ```bash
@@ -294,7 +277,7 @@ Opção: 2
 ⏳ Isso pode demorar alguns minutos... Por favor, aguarde!
 ```
 
-## 📁 Estrutura de Arquivos
+## 📁 Estrutura de Arquivos Completa
 
 ```
 scraper_integral_medica/
@@ -317,7 +300,7 @@ scraper_integral_medica/
     └── coleta_urls.log
 ```
 
-## 🔍 Dados Coletados
+## 🔍 Dados Coletados Detalhados
 
 ### Campos Extraídos
 - **URL**: Link do produto
@@ -350,9 +333,9 @@ https://...,BCAA,10,0,0,10
 - `requests==2.31.0` - Requisições HTTP
 - `beautifulsoup4==4.12.2` - Parsing HTML
 - `selenium==4.15.2` - Automação web
-- `pandas==2.1.4` - Manipulação de dados
+- `pandas>=2.2.0` - Manipulação de dados
 - `webdriver-manager==4.0.1` - Gerenciamento de drivers
-- `lxml==4.9.3` - Parser XML/HTML
+- `lxml>=5.0.0` - Parser XML/HTML
 - `openpyxl==3.1.2` - Manipulação Excel
 
 ### Requisitos do Sistema
@@ -417,21 +400,42 @@ O sistema gera logs detalhados em:
 - ✅ Sistema de logs
 - ✅ Menu interativo
 
-## 🤝 Suporte
+## 🆘 Suporte
 
 Para problemas ou dúvidas:
 1. Execute `python teste_windows.py` para diagnóstico
 2. Verifique os logs em `logs/`
-3. Forneça informações do sistema:
+3. Abra uma [issue](https://github.com/sidnei-almeida/scraper_integral_medica/issues) no GitHub
+4. Forneça informações do sistema:
    - Versão do Python: `python --version`
    - Versão do Chrome: Chrome > Ajuda > Sobre
    - Sistema operacional
    - Mensagem de erro completa
 
+## 🎉 Resumo para Pressa
+
+**Para usar:**
+1. `git clone https://github.com/sidnei-almeida/scraper_integral_medica.git`
+2. `cd scraper_integral_medica`
+3. `pip install -r requirements.txt`
+4. `python main.py`
+5. Aguarde e encontre os dados em `dados/csv/`
+
+**Pronto!** 🚀
+
 ## 📄 Licença
 
 Este projeto é para fins educacionais e de pesquisa. Respeite os termos de uso do site da Integral Médica.
 
+## 🔗 Links Úteis
+
+- 🏠 [Repositório Principal](https://github.com/sidnei-almeida/scraper_integral_medica)
+- 🐛 [Reportar Bugs](https://github.com/sidnei-almeida/scraper_integral_medica/issues)
+- 🤝 [Contribuir](https://github.com/sidnei-almeida/scraper_integral_medica/pulls)
+- 📊 [Releases](https://github.com/sidnei-almeida/scraper_integral_medica/releases)
+
 ---
 
 **Desenvolvido com ❤️ para facilitar a coleta de dados nutricionais**
+
+⭐ **Se este projeto foi útil para você, considere dar uma estrela no [GitHub](https://github.com/sidnei-almeida/scraper_integral_medica)!**
