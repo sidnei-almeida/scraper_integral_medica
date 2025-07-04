@@ -19,6 +19,7 @@
 | Campo | Descrição |
 |-------|-----------|
 | URL | Link do produto |
+| NOME_PRODUTO | Nome do produto |
 | PORÇÃO (g) | Tamanho da porção |
 | CALORIAS (kcal) | Valor energético |
 | CARBOIDRATOS (g) | Quantidade de carboidratos |
@@ -80,11 +81,13 @@ scraper_integral_medica/
 │   ├── teste.py               #    Teste rápido
 │   ├── teste_pandas.py        #    Teste pandas e Excel
 │   └── test_page_structure.py #    Teste de estrutura da página
-└── dados/                     # 📊 Dados coletados
-    ├── csv/                   #    Arquivos CSV gerados
-    │   └── produtos_nutricional_completo.csv
-    ├── excel/                 #    Arquivos Excel (futuro)
-    └── scraper_completo.log   #    Log de execução
+├── dados/                     # 📊 Dados coletados
+│   ├── csv/                   #    Arquivos CSV
+│   │   └── dados.csv          #    Dados coletados
+│   └── excel/                 #    Arquivos Excel
+│       └── dados.xlsx         #    Dados formatados
+└── logs/                      # 📋 Logs de execução
+    └── scraper_integrado.log  #    Log detalhado
 ```
 
 ## 🎮 Modo de Uso Interativo
@@ -102,9 +105,9 @@ Quando executar `python main.py`, você verá:
 
 Após a execução, você terá:
 
-- **`dados/csv/produtos_nutricional_completo_YYYYMMDD_HHMMSS.csv`** - Planilha CSV com todos os dados
-- **`dados/excel/produtos_nutricional_completo_YYYYMMDD_HHMMSS.xlsx`** - Planilha Excel formatada
-- **`dados/scraper_completo.log`** - Log detalhado da execução
+- **`dados/csv/dados.csv`** - Planilha CSV com todos os dados
+- **`dados/excel/dados.xlsx`** - Planilha Excel formatada
+- **`logs/scraper_integrado.log`** - Log detalhado da execução
 
 ### 📈 **Tecnologias Utilizadas:**
 - **pandas** - Manipulação e análise de dados
@@ -140,7 +143,7 @@ pip install -r requirements.txt
 - Tente executar em horários diferentes
 
 ### "Erro inesperado"
-- Verifique o arquivo `dados/scraper_completo.log`
+- Verifique o arquivo `logs/scraper_integrado.log`
 - Execute `python config/teste.py` para verificar se tudo está funcionando
 
 ## 📈 Exemplo de Execução
@@ -183,7 +186,7 @@ $ python main.py
 1. **Primeira vez?** Execute `python config/teste.py` para verificar se tudo está funcionando
 2. **Quer ver funcionando?** Use modo visual quando perguntado
 3. **Demora muito?** É normal! O programa coleta dados de centenas de produtos
-4. **Deu erro?** Verifique o arquivo `dados/scraper_completo.log`
+4. **Deu erro?** Verifique o arquivo `logs/scraper_integrado.log`
 5. **Planilha não abre?** Use Excel, LibreOffice ou Google Sheets
 
 ## 🤝 Contribuição
@@ -323,8 +326,8 @@ scraper_integral_medica/
 
 ```csv
 URL,NOME_PRODUTO,PORÇÃO (g),CALORIAS (kcal),CARBOIDRATOS (g),PROTEÍNAS (g)
-https://...,Whey Protein,30,120,2,25
-https://...,BCAA,10,0,0,10
+https://...,Whey Protein Isolado,30,120,2,25
+https://...,BCAA 2400 120 cápsulas,10,0,0,10
 ```
 
 ## 🛠️ Requisitos Técnicos
@@ -404,7 +407,7 @@ O sistema gera logs detalhados em:
 
 Para problemas ou dúvidas:
 1. Execute `python teste_windows.py` para diagnóstico
-2. Verifique os logs em `logs/`
+2. Verifique os logs em `logs/scraper_integrado.log`
 3. Abra uma [issue](https://github.com/sidnei-almeida/scraper_integral_medica/issues) no GitHub
 4. Forneça informações do sistema:
    - Versão do Python: `python --version`
@@ -419,7 +422,7 @@ Para problemas ou dúvidas:
 2. `cd scraper_integral_medica`
 3. `pip install -r requirements.txt`
 4. `python main.py`
-5. Aguarde e encontre os dados em `dados/csv/`
+5. Aguarde e encontre os dados em `dados/csv/dados.csv`
 
 **Pronto!** 🚀
 
