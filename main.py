@@ -1,318 +1,495 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 """
-🚀 SCRAPER INTEGRAL MÉDICA - SCRIPT PRINCIPAL
-============================================
+🚀 SCRAPER INTEGRAL MÉDICA - Interface Profissional
+==================================================
+Script avançado para coleta de dados nutricionais da Integral Médica
 
-Este é o script principal para coletar dados nutricionais de todos os produtos
-da Integral Médica. Simplesmente execute este arquivo para começar!
-
-Como usar:
-    python main.py
-
-Os dados serão salvos em:
-    - dados/csv/produtos_nutricional_completo.csv
-    - logs/scraper_completo.log (arquivo de log)
-
-Campos coletados:
-    - URL, PORÇÃO, CALORIAS, CARBOIDRATOS, PROTEÍNAS, GORDURAS_TOTAIS,
-      GORDURAS_SATURADAS, FIBRAS, AÇÚCARES, SÓDIO
+FUNCIONALIDADES:
+1. Coleta automatizada de URLs de produtos
+2. Extração completa de dados nutricionais  
+3. Testes individuais de produtos
+4. Geração de relatórios em CSV e Excel
 """
 
-import sys
 import os
+import sys
 import time
+import glob
 from datetime import datetime
+from typing import List, Dict, Optional
 
 # Adicionar pasta config ao path para importar scripts
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'config'))
 
-def print_header():
-    """Imprime cabeçalho do programa"""
-    print("=" * 60)
-    print("🚀 SCRAPER INTEGRAL MÉDICA - DADOS NUTRICIONAIS")
-    print("=" * 60)
-    print()
-    print("📋 Este programa irá:")
-    print("   ✅ Acessar o site da Integral Médica")
-    print("   ✅ Carregar TODOS os produtos (até 8 cliques)")
-    print("   ✅ Coletar dados nutricionais de cada produto")
-    print("   ✅ Salvar os dados em formato CSV")
-    print()
-    print("📁 Arquivos de saída:")
-    print("   📄 dados/csv/produtos_nutricional_completo.csv")
-    print("   📋 logs/scraper_completo.log")
+# ============================================================================
+# 🎨 SISTEMA DE CORES ANSI PARA TERMINAL
+# ============================================================================
+class Cores:
+    RESET = '\033[0m'
+    BOLD = '\033[1m'
+    VERDE = '\033[92m'
+    AZUL = '\033[94m'
+    AMARELO = '\033[93m'
+    VERMELHO = '\033[91m'
+    CIANO = '\033[96m'
+    MAGENTA = '\033[95m'
+    BRANCO = '\033[97m'
+
+# ============================================================================
+# 🛠️ FUNÇÕES UTILITÁRIAS
+# ============================================================================
+def limpar_terminal():
+    """Limpa o terminal"""
+    os.system('clear' if os.name == 'posix' else 'cls')
+
+def mostrar_banner():
+    """Exibe o banner principal do programa"""
+    banner = f"""
+{Cores.CIANO}{Cores.BOLD}
+╔══════════════════════════════════════════════════════════════╗
+║                🚀 SCRAPER INTEGRAL MÉDICA                    ║
+║                                                              ║
+║              Coleta Automatizada de Dados v2.0              ║
+║                                                              ║
+║  📊 Extração de Dados Nutricionais                          ║
+║  🎯 Coleta de URLs de Produtos                              ║
+║  📝 Geração de Relatórios CSV/Excel                         ║
+╚══════════════════════════════════════════════════════════════╝
+{Cores.RESET}"""
+    print(banner)
+
+def mostrar_barra_progresso(texto: str, duracao: float = 2.0):
+    """Exibe uma barra de progresso animada"""
+    print(f"\n{Cores.AMARELO}⏳ {texto}...{Cores.RESET}")
+    barra_tamanho = 40
+    for i in range(barra_tamanho + 1):
+        progresso = i / barra_tamanho
+        barra = "█" * i + "░" * (barra_tamanho - i)
+        porcentagem = int(progresso * 100)
+        print(f"\r{Cores.VERDE}[{barra}] {porcentagem}%{Cores.RESET}", end="", flush=True)
+        time.sleep(duracao / barra_tamanho)
     print()
 
-def print_footer(total_produtos, produtos_com_dados, tempo_execucao):
-    """Imprime resumo final"""
-    print("\n" + "=" * 60)
-    print("✅ SCRAPING CONCLUÍDO COM SUCESSO!")
-    print("=" * 60)
-    print(f"📦 Total de produtos processados: {total_produtos}")
-    print(f"📊 Produtos com dados nutricionais: {produtos_com_dados}")
-    print(f"⏱️  Tempo de execução: {tempo_execucao:.1f} segundos")
-    print()
-    print("📁 Verifique os arquivos gerados:")
-    print("   📄 dados/csv/produtos_nutricional_completo.csv")
-    print("   📋 logs/scraper_completo.log")
-    print()
-    print("🎉 Processo finalizado!")
-    print("=" * 60)
+def mostrar_menu():
+    """Exibe o menu principal"""
+    menu = f"""
+{Cores.AZUL}{Cores.BOLD}═══════════════════ MENU PRINCIPAL ═══════════════════{Cores.RESET}
+
+{Cores.VERDE}🚀 OPERAÇÕES PRINCIPAIS:{Cores.RESET}
+  {Cores.AMARELO}1.{Cores.RESET} 🔗 {Cores.BRANCO}Coletar URLs{Cores.RESET} - Extrai URLs de todos os produtos
+  {Cores.AMARELO}2.{Cores.RESET} 📊 {Cores.BRANCO}Coleta Completa{Cores.RESET} - URLs + Dados nutricionais
+  {Cores.AMARELO}3.{Cores.RESET} 🧪 {Cores.BRANCO}Teste Individual{Cores.RESET} - Testa um produto específico
+
+{Cores.VERDE}📁 GERENCIAR DADOS:{Cores.RESET}
+  {Cores.AMARELO}4.{Cores.RESET} 📋 {Cores.BRANCO}Ver Arquivos{Cores.RESET} - Lista arquivos gerados
+  {Cores.AMARELO}5.{Cores.RESET} 🗑️  {Cores.BRANCO}Limpar Dados{Cores.RESET} - Remove arquivos antigos
+
+{Cores.VERDE}ℹ️  INFORMAÇÕES:{Cores.RESET}
+  {Cores.AMARELO}6.{Cores.RESET} 📖 {Cores.BRANCO}Sobre o Programa{Cores.RESET} - Informações e estatísticas
+  {Cores.AMARELO}7.{Cores.RESET} ❌ {Cores.BRANCO}Sair{Cores.RESET} - Encerrar programa
+
+{Cores.AZUL}══════════════════════════════════════════════════════{Cores.RESET}
+"""
+    print(menu)
+
+def obter_escolha() -> str:
+    """Obtém a escolha do usuário"""
+    try:
+        escolha = input(f"{Cores.MAGENTA}👉 Digite sua opção (1-7): {Cores.RESET}").strip()
+        return escolha
+    except KeyboardInterrupt:
+        print(f"\n\n{Cores.AMARELO}⚠️  Programa interrompido pelo usuário{Cores.RESET}")
+        sys.exit(0)
 
 def verificar_dependencias():
     """Verifica se as dependências estão instaladas"""
+    print(f"\n{Cores.CIANO}🔧 Verificando dependências...{Cores.RESET}")
     dependencias_faltando = []
     
-    try:
-        import requests
-    except ImportError:
-        dependencias_faltando.append("requests")
+    dependencias = {
+        'requests': 'requests',
+        'selenium': 'selenium', 
+        'beautifulsoup4': 'bs4'
+    }
     
-    try:
-        import selenium
-    except ImportError:
-        dependencias_faltando.append("selenium")
-    
-    try:
-        from bs4 import BeautifulSoup
-    except ImportError:
-        dependencias_faltando.append("beautifulsoup4")
+    for nome_pacote, modulo in dependencias.items():
+        try:
+            if modulo == 'bs4':
+                from bs4 import BeautifulSoup
+            else:
+                __import__(modulo)
+            print(f"   ✅ {nome_pacote}")
+        except ImportError:
+            dependencias_faltando.append(nome_pacote)
+            print(f"   ❌ {nome_pacote}")
     
     if dependencias_faltando:
-        print("❌ ERRO: Dependências não instaladas!")
-        print(f"🔧 Execute: pip install {' '.join(dependencias_faltando)}")
-        print("💡 Ou execute: pip install -r requirements.txt")
+        print(f"\n{Cores.VERMELHO}❌ ERRO: Dependências não instaladas!{Cores.RESET}")
+        print(f"{Cores.AMARELO}🔧 Execute: pip install {' '.join(dependencias_faltando)}{Cores.RESET}")
+        print(f"{Cores.AMARELO}💡 Ou execute: pip install -r requirements.txt{Cores.RESET}")
         return False
     
+    print(f"{Cores.VERDE}✅ Todas as dependências estão instaladas!{Cores.RESET}")
     return True
 
-def main():
-    """Função principal"""
-    print_header()
-    
-    # Verificar dependências
-    if not verificar_dependencias():
-        print("💡 Você pode executar o teste rápido com: python config/teste.py")
-        sys.exit(1)
-    
-    # Opções para o usuário
-    print("🔧 OPÇÕES DISPONÍVEIS:")
-    print("   1️⃣  Coletar apenas URLs dos produtos")
-    print("   2️⃣  Coletar dados nutricionais completos (URLs + Dados)")
-    print("   3️⃣  Testar um produto específico")
-    print("   4️⃣  Cancelar")
-    print()
-    
-    while True:
-        print("🤔 Escolha uma opção (1, 2, 3 ou 4): ", end="")
-        opcao = input().strip()
-        
-        if opcao == "1":
-            executar_coleta_urls()
-            break
-        elif opcao == "2":
-            executar_coleta_completa()
-            break
-        elif opcao == "3":
-            executar_teste_produto()
-            break
-        elif opcao == "4":
-            print("❌ Operação cancelada pelo usuário.")
-            print("💡 Para testar se tudo está funcionando: python config/teste.py")
-            sys.exit(0)
-        else:
-            print("❌ Opção inválida! Digite 1, 2, 3 ou 4.")
+# ============================================================================
+# 🎯 FUNÇÕES ESPECÍFICAS DO SCRAPER
+# ============================================================================
 
 def executar_coleta_urls():
     """Executa apenas a coleta de URLs"""
-    print("\n🔍 COLETA DE URLs")
-    print("=" * 40)
-    print("📋 Esta opção irá:")
-    print("   ✅ Acessar o site da Integral Médica")
-    print("   ✅ Carregar todos os produtos clicando 'Ver mais produtos'")
-    print("   ✅ Coletar apenas as URLs dos produtos")
-    print("   ✅ Salvar as URLs em arquivo texto")
-    print()
+    print(f"\n{Cores.CIANO}{Cores.BOLD}🔗 COLETANDO URLs DOS PRODUTOS{Cores.RESET}")
+    print(f"{Cores.AZUL}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{Cores.RESET}")
     
-    # Perguntar se quer ver o navegador funcionando
-    print("🖥️  Deseja ver o navegador funcionando? (s/n): ", end="")
+    print(f"\n{Cores.VERDE}✅ Configurações:{Cores.RESET}")
+    print(f"   📊 Site: {Cores.AMARELO}Integral Médica{Cores.RESET}")
+    print(f"   🔄 Carregamento: {Cores.AMARELO}Automático (até 8 cliques 'Ver mais'){Cores.RESET}")
+    print(f"   📁 Saída: {Cores.AMARELO}dados/{Cores.RESET}")
+    
+    # Perguntar sobre modo visual
+    print(f"\n{Cores.MAGENTA}🖥️  Deseja ver o navegador funcionando? (s/N): {Cores.RESET}", end="")
     resposta_visual = input().strip().lower()
     headless = resposta_visual not in ['s', 'sim', 'y', 'yes']
     
     if headless:
-        print("🤖 Modo headless ativado (sem interface gráfica)")
+        print(f"{Cores.AZUL}🤖 Modo headless ativado (sem interface gráfica){Cores.RESET}")
     else:
-        print("🖥️  Modo visual ativado (você verá o navegador)")
+        print(f"{Cores.AZUL}🖥️  Modo visual ativado (você verá o navegador){Cores.RESET}")
     
-    print("\n🚀 Iniciando coleta de URLs...")
-    inicio = time.time()
+    confirmar = input(f"\n{Cores.MAGENTA}🤔 Continuar com a coleta? (s/N): {Cores.RESET}").lower()
     
-    try:
-        # Importar e executar coletor de URLs
-        from coletar_urls import URLCollector
-        
-        # Criar coletor
-        collector = URLCollector(headless=headless)
-        
-        # Executar coleta
-        urls = collector.run()
-        
-        # Calcular tempo
-        fim = time.time()
-        tempo_execucao = fim - inicio
-        
-        if urls:
-            print(f"\n✅ Sucesso! {len(urls)} URLs coletadas")
-            print(f"⏱️  Tempo de execução: {tempo_execucao:.1f} segundos")
+    if confirmar in ['s', 'sim', 'y', 'yes']:
+        try:
+            mostrar_barra_progresso("Inicializando navegador", 1.0)
             
-            # Mostrar algumas URLs
-            print("\n🔍 Primeiras 5 URLs coletadas:")
-            for i, url in enumerate(urls[:5]):
-                print(f"   {i+1}. {url}")
+            # Importar e executar coletor de URLs
+            from coletar_urls import URLCollector
             
-            if len(urls) > 5:
-                print(f"   ... e mais {len(urls) - 5} URLs")
+            print(f"{Cores.VERDE}🚀 Iniciando coleta de URLs...{Cores.RESET}")
+            inicio = time.time()
             
-            print(f"\n📁 URLs salvas em: dados/")
-        else:
-            print("\n❌ Nenhuma URL foi coletada.")
+            # Criar coletor
+            collector = URLCollector(headless=headless)
             
-    except KeyboardInterrupt:
-        print("\n⚠️  Operação interrompida pelo usuário.")
-        sys.exit(0)
-    except Exception as e:
-        print(f"\n❌ Erro inesperado: {e}")
-        sys.exit(1)
+            # Executar coleta
+            urls = collector.run()
+            
+            # Calcular tempo
+            fim = time.time()
+            tempo_execucao = fim - inicio
+            
+            if urls:
+                print(f"\n{Cores.VERDE}✅ Sucesso! {len(urls)} URLs coletadas{Cores.RESET}")
+                print(f"{Cores.AZUL}⏱️  Tempo de execução: {tempo_execucao:.1f} segundos{Cores.RESET}")
+                
+                # Mostrar algumas URLs
+                print(f"\n{Cores.CIANO}🔍 Primeiras 5 URLs coletadas:{Cores.RESET}")
+                for i, url in enumerate(urls[:5]):
+                    print(f"   {Cores.AMARELO}{i+1}.{Cores.RESET} {url}")
+                
+                if len(urls) > 5:
+                    print(f"   {Cores.AZUL}... e mais {len(urls) - 5} URLs{Cores.RESET}")
+                
+                print(f"\n{Cores.VERDE}📁 URLs salvas na pasta: dados/{Cores.RESET}")
+            else:
+                print(f"\n{Cores.VERMELHO}❌ Nenhuma URL foi coletada.{Cores.RESET}")
+                
+        except KeyboardInterrupt:
+            print(f"\n{Cores.AMARELO}⚠️  Operação interrompida pelo usuário.{Cores.RESET}")
+        except Exception as e:
+            print(f"\n{Cores.VERMELHO}❌ Erro inesperado: {e}{Cores.RESET}")
+    else:
+        print(f"{Cores.AMARELO}⏭️  Operação cancelada{Cores.RESET}")
 
 def executar_coleta_completa():
-    """Executa a coleta completa de dados nutricionais usando o script integrado"""
-    print("\n📊 COLETA COMPLETA DE DADOS NUTRICIONAIS")
-    print("=" * 50)
-    print("📋 Esta opção irá:")
-    print("   ✅ Coletar URLs de todos os produtos")
-    print("   ✅ Extrair dados nutricionais de cada produto")
-    print("   ✅ Salvar dados em CSV e XLSX")
-    print("   📄 Arquivo CSV: dados/csv/dados.csv")
-    print("   📊 Arquivo XLSX: dados/excel/dados.xlsx")
-    print()
+    """Executa a coleta completa de dados nutricionais"""
+    print(f"\n{Cores.CIANO}{Cores.BOLD}📊 COLETA COMPLETA DE DADOS NUTRICIONAIS{Cores.RESET}")
+    print(f"{Cores.AZUL}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{Cores.RESET}")
     
-    # Perguntar ao usuário se deseja continuar
-    print("🤔 Deseja continuar? (s/n): ", end="")
-    resposta = input().strip().lower()
+    print(f"\n{Cores.VERDE}✅ Este processo irá:{Cores.RESET}")
+    print(f"   🔗 Coletar URLs de todos os produtos")
+    print(f"   📊 Extrair dados nutricionais de cada produto")
+    print(f"   💾 Salvar em CSV e Excel")
+    print(f"   📋 Gerar logs detalhados")
     
-    if resposta not in ['s', 'sim', 'y', 'yes']:
-        print("❌ Operação cancelada pelo usuário.")
-        print("💡 Para testar se tudo está funcionando: python config/teste.py")
-        sys.exit(0)
+    print(f"\n{Cores.AMARELO}⚠️  ATENÇÃO:{Cores.RESET}")
+    print(f"   • Esta operação pode demorar {Cores.VERMELHO}vários minutos{Cores.RESET}")
+    print(f"   • Serão processados {Cores.VERMELHO}centenas de produtos{Cores.RESET}")
+    print(f"   • Recomendado para uso noturno ou em horários livres")
     
-    # Perguntar se quer ver o navegador funcionando
-    print("🖥️  Deseja ver o navegador funcionando? (s/n): ", end="")
-    resposta_visual = input().strip().lower()
-    headless = resposta_visual not in ['s', 'sim', 'y', 'yes']
+    print(f"\n{Cores.VERDE}📁 Arquivos de saída:{Cores.RESET}")
+    print(f"   📄 dados/csv/dados.csv")
+    print(f"   📊 dados/excel/dados.xlsx")
+    print(f"   📋 logs/scraper_completo.log")
     
-    if headless:
-        print("🤖 Modo headless ativado (sem interface gráfica)")
+    confirmar = input(f"\n{Cores.MAGENTA}🤔 Continuar com a coleta completa? (s/N): {Cores.RESET}").lower()
+    
+    if confirmar in ['s', 'sim', 'y', 'yes']:
+        try:
+            mostrar_barra_progresso("Preparando coleta completa", 1.5)
+            
+            # Importar e executar scraper completo
+            from scraper_completo_integrado import main as scraper_main
+            
+            print(f"{Cores.VERDE}🚀 Iniciando coleta completa...{Cores.RESET}")
+            inicio = time.time()
+            
+            # Executar scraper
+            scraper_main()
+            
+            fim = time.time()
+            tempo_execucao = fim - inicio
+            
+            print(f"\n{Cores.VERDE}✅ Coleta completa finalizada!{Cores.RESET}")
+            print(f"{Cores.AZUL}⏱️  Tempo total: {tempo_execucao:.1f} segundos{Cores.RESET}")
+            
+        except KeyboardInterrupt:
+            print(f"\n{Cores.AMARELO}⚠️  Operação interrompida pelo usuário.{Cores.RESET}")
+        except Exception as e:
+            print(f"\n{Cores.VERMELHO}❌ Erro: {e}{Cores.RESET}")
     else:
-        print("🖥️  Modo visual ativado (você verá o navegador)")
-    
-    print("\n🚀 Iniciando scraper integrado...")
-    print("⏳ Isso pode demorar alguns minutos... Por favor, aguarde!")
-    
-    # Registrar tempo de início
-    inicio = time.time()
-    
-    try:
-        # Importar e executar scraper integrado
-        from scraper_completo_integrado import IntegratedScraper
-        
-        # Criar scraper
-        scraper = IntegratedScraper(headless=headless)
-        
-        # Executar coleta
-        dados = scraper.run()
-        
-        # Calcular estatísticas
-        fim = time.time()
-        tempo_execucao = fim - inicio
-        
-        if dados:
-            total_produtos = len(dados)
-            produtos_com_dados = sum(1 for produto in dados 
-                                   if any(produto[field] != '0' for field in scraper.target_fields[2:]))
-            
-            print_footer(total_produtos, produtos_com_dados, tempo_execucao)
-            
-            # Mostrar exemplo de dados
-            print("\n📋 EXEMPLO DOS DADOS COLETADOS:")
-            print("-" * 40)
-            for i, produto in enumerate(dados[:3]):
-                print(f"\n{i+1}. {produto['NOME_PRODUTO']}")
-                print(f"   URL: {produto['URL']}")
-                for field in scraper.target_fields[2:]:
-                    if produto[field] != '0':
-                        print(f"   {field}: {produto[field]}")
-            
-            if len(dados) > 3:
-                print(f"\n... e mais {len(dados) - 3} produtos!")
-        else:
-            print("\n❌ Nenhum dado foi coletado.")
-            print("🔍 Verifique o arquivo de log para mais detalhes:")
-            print("   📋 logs/scraper_integrado.log")
-            
-    except KeyboardInterrupt:
-        print("\n⚠️  Operação interrompida pelo usuário.")
-        print("🔄 Você pode executar novamente quando quiser.")
-        sys.exit(0)
-    except Exception as e:
-        print(f"\n❌ Erro inesperado: {e}")
-        print("🔍 Verifique o arquivo de log para mais detalhes:")
-        print("   📋 logs/scraper_integrado.log")
-        sys.exit(1)
+        print(f"{Cores.AMARELO}⏭️  Operação cancelada{Cores.RESET}")
 
 def executar_teste_produto():
     """Executa teste em um produto específico"""
-    print("\n🧪 TESTE DE PRODUTO ESPECÍFICO")
-    print("=" * 40)
-    print("📋 Esta opção irá:")
-    print("   ✅ Testar extração de dados de um produto específico")
-    print("   ✅ Mostrar dados coletados na tela")
-    print("   ✅ Salvar resultado em teste_produto.json")
-    print()
-    
-    # Solicitar URL do produto
-    print("🔗 Digite a URL do produto para testar:")
-    print("   Exemplo: https://www.integralmedica.com.br/whey-protein-concentrado-pouch-900g/p")
-    print()
-    url_produto = input("URL: ").strip()
-    
-    if not url_produto:
-        print("❌ URL não fornecida. Usando URL padrão para teste.")
-        url_produto = "https://www.integralmedica.com.br/whey-protein-concentrado-pouch-900g/p"
-    
-    print(f"\n🔍 Testando produto: {url_produto}")
+    print(f"\n{Cores.CIANO}{Cores.BOLD}🧪 TESTE DE PRODUTO ESPECÍFICO{Cores.RESET}")
+    print(f"{Cores.AZUL}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{Cores.RESET}")
     
     try:
+        print(f"\n{Cores.VERDE}📋 Insira a URL completa do produto para teste:{Cores.RESET}")
+        print(f"{Cores.AZUL}Exemplo: https://www.integralmedica.com.br/produto/whey-protein{Cores.RESET}")
+        
+        url = input(f"\n{Cores.MAGENTA}🔗 URL do produto: {Cores.RESET}").strip()
+        
+        if not url:
+            print(f"{Cores.VERMELHO}❌ URL obrigatória!{Cores.RESET}")
+            return
+        
+        if "integralmedica.com.br" not in url:
+            print(f"{Cores.VERMELHO}❌ URL deve ser da Integral Médica!{Cores.RESET}")
+            return
+            
+        print(f"\n{Cores.VERDE}✅ Testando produto: {Cores.AMARELO}{url}{Cores.RESET}")
+        
+        mostrar_barra_progresso("Executando teste", 1.0)
+        
         # Importar e executar teste
-        from teste_nutricional import NutritionalDataExtractor
+        from teste_nutricional import testar_produto_especifico
         
-        # Criar extrator
-        extractor = NutritionalDataExtractor()
+        resultado = testar_produto_especifico(url)
         
-        # Extrair dados
-        product_data = extractor.extract_all_data(url_produto)
+        if resultado:
+            print(f"{Cores.VERDE}✅ Teste concluído com sucesso!{Cores.RESET}")
+            print(f"{Cores.AZUL}📄 Dados salvos em: teste_produto.json{Cores.RESET}")
+        else:
+            print(f"{Cores.VERMELHO}❌ Falha no teste do produto{Cores.RESET}")
         
-        # Mostrar resultados
-        extractor.print_results(product_data)
-        
-        print(f"\n💾 Dados salvos em: teste_produto.json")
-        
-    except KeyboardInterrupt:
-        print("\n⚠️  Teste interrompido pelo usuário.")
-        sys.exit(0)
     except Exception as e:
-        print(f"\n❌ Erro no teste: {e}")
-        print("💡 Verifique se a URL está correta e tente novamente.")
-        sys.exit(1)
+        print(f"\n{Cores.VERMELHO}❌ Erro: {e}{Cores.RESET}")
+
+def listar_arquivos_gerados():
+    """Lista arquivos gerados pelo programa"""
+    print(f"\n{Cores.CIANO}{Cores.BOLD}📋 ARQUIVOS GERADOS{Cores.RESET}")
+    print(f"{Cores.AZUL}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{Cores.RESET}")
+    
+    pastas_dados = ["dados", "logs"]
+    extensoes = ["*.csv", "*.xlsx", "*.json", "*.log", "*.txt"]
+    
+    total_arquivos = 0
+    
+    for pasta in pastas_dados:
+        if not os.path.exists(pasta):
+            print(f"{Cores.AMARELO}📁 Pasta '{pasta}' não encontrada{Cores.RESET}")
+            continue
+            
+        print(f"\n{Cores.VERDE}📂 Pasta: {pasta}/{Cores.RESET}")
+        
+        arquivos_pasta = []
+        for ext in extensoes:
+            arquivos_pasta.extend(glob.glob(f"{pasta}/**/{ext}", recursive=True))
+        
+        if not arquivos_pasta:
+            print(f"   {Cores.AMARELO}📄 Nenhum arquivo encontrado{Cores.RESET}")
+            continue
+        
+        for i, arquivo in enumerate(sorted(arquivos_pasta, reverse=True), 1):
+            nome_arquivo = os.path.basename(arquivo)
+            tamanho = os.path.getsize(arquivo)
+            data_modificacao = datetime.fromtimestamp(os.path.getmtime(arquivo))
+            
+            # Calcula o tamanho em formato legível
+            if tamanho < 1024:
+                tamanho_str = f"{tamanho} B"
+            elif tamanho < 1024 * 1024:
+                tamanho_str = f"{tamanho / 1024:.1f} KB"
+            else:
+                tamanho_str = f"{tamanho / (1024 * 1024):.1f} MB"
+            
+            print(f"   {Cores.AMARELO}{i:2d}.{Cores.RESET} {Cores.BRANCO}{nome_arquivo}{Cores.RESET}")
+            print(f"      📅 {data_modificacao.strftime('%d/%m/%Y %H:%M:%S')}")
+            print(f"      📏 {tamanho_str}")
+            
+            total_arquivos += 1
+    
+    print(f"\n{Cores.VERDE}📊 Total de arquivos encontrados: {total_arquivos}{Cores.RESET}")
+
+def limpar_dados_antigos():
+    """Remove arquivos antigos"""
+    print(f"\n{Cores.CIANO}{Cores.BOLD}🗑️  LIMPAR DADOS ANTIGOS{Cores.RESET}")
+    print(f"{Cores.AZUL}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{Cores.RESET}")
+    
+    pastas_dados = ["dados", "logs"]
+    extensoes = ["*.csv", "*.xlsx", "*.json", "*.log", "*.txt"]
+    
+    arquivos_para_remover = []
+    
+    for pasta in pastas_dados:
+        if os.path.exists(pasta):
+            for ext in extensoes:
+                arquivos_para_remover.extend(glob.glob(f"{pasta}/**/{ext}", recursive=True))
+    
+    if not arquivos_para_remover:
+        print(f"{Cores.VERDE}✅ Nenhum arquivo para limpar{Cores.RESET}")
+        return
+    
+    print(f"\n{Cores.AMARELO}⚠️  ATENÇÃO:{Cores.RESET}")
+    print(f"   • Serão removidos {Cores.VERMELHO}{len(arquivos_para_remover)} arquivos{Cores.RESET}")
+    print(f"   • Esta ação {Cores.VERMELHO}NÃO PODE ser desfeita{Cores.RESET}")
+    print(f"   • Inclui: CSV, Excel, JSON, Logs e arquivos de texto")
+    
+    confirmar = input(f"\n{Cores.MAGENTA}🤔 Tem certeza? Digite 'CONFIRMAR' para prosseguir: {Cores.RESET}")
+    
+    if confirmar == "CONFIRMAR":
+        try:
+            for arquivo in arquivos_para_remover:
+                os.remove(arquivo)
+            print(f"\n{Cores.VERDE}✅ {len(arquivos_para_remover)} arquivos removidos com sucesso!{Cores.RESET}")
+        except Exception as e:
+            print(f"\n{Cores.VERMELHO}❌ Erro ao remover arquivos: {e}{Cores.RESET}")
+    else:
+        print(f"{Cores.AMARELO}⏭️  Operação cancelada{Cores.RESET}")
+
+def mostrar_sobre():
+    """Exibe informações sobre o programa"""
+    sobre = f"""
+{Cores.CIANO}{Cores.BOLD}📖 SOBRE O SCRAPER INTEGRAL MÉDICA{Cores.RESET}
+{Cores.AZUL}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{Cores.RESET}
+
+{Cores.VERDE}🎯 OBJETIVO:{Cores.RESET}
+   Automatizar a coleta de dados nutricionais de todos os produtos
+   disponíveis no site da Integral Médica, gerando relatórios
+   estruturados para análise e pesquisa.
+
+{Cores.VERDE}📊 FUNCIONALIDADES:{Cores.RESET}
+   • Coleta automatizada de URLs de produtos
+   • Extração de dados nutricionais completos
+   • Testes individuais para debugging
+   • Geração de relatórios CSV e Excel
+   • Sistema de logs detalhado
+
+{Cores.VERDE}🛠️  TECNOLOGIAS:{Cores.RESET}
+   • Python 3.8+
+   • Selenium WebDriver
+   • BeautifulSoup4
+   • Requests
+   • Pandas
+
+{Cores.VERDE}📂 ARQUIVOS GERADOS:{Cores.RESET}
+   • Formato: CSV, Excel, JSON
+   • Localização: dados/, logs/
+   • Nomenclatura: dados.csv, dados.xlsx
+
+{Cores.VERDE}📋 DADOS COLETADOS:{Cores.RESET}
+   • URL do produto
+   • Porção recomendada
+   • Calorias
+   • Carboidratos
+   • Proteínas
+   • Gorduras totais e saturadas
+   • Fibras alimentares
+   • Açúcares
+   • Sódio
+
+{Cores.VERDE}⚡ CARACTERÍSTICAS:{Cores.RESET}
+   • Carregamento automático de produtos (até 8 cliques)
+   • Tratamento de erros robusto
+   • Interface visual profissional
+   • Modo headless para execução em background
+   • Sistema de progresso em tempo real
+
+{Cores.VERDE}📝 DESENVOLVIDO POR:{Cores.RESET}
+   • Sistema de Web Scraping Avançado
+   • Versão: 2.0
+   • Data: {datetime.now().strftime('%B %Y')}
+
+{Cores.AZUL}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{Cores.RESET}
+"""
+    print(sobre)
+
+def pausar():
+    """Pausa o programa aguardando input do usuário"""
+    input(f"\n{Cores.CIANO}⏯️  Pressione Enter para continuar...{Cores.RESET}")
+
+# ============================================================================
+# 🚀 FUNÇÃO PRINCIPAL
+# ============================================================================
+def main():
+    """Função principal do programa"""
+    try:
+        while True:
+            limpar_terminal()
+            mostrar_banner()
+            
+            # Verificar dependências na primeira execução
+            if not verificar_dependencias():
+                print(f"\n{Cores.AMARELO}💡 Instale as dependências e execute novamente{Cores.RESET}")
+                print(f"{Cores.AZUL}🧪 Para teste rápido: python config/teste.py{Cores.RESET}")
+                pausar()
+                continue
+            
+            mostrar_menu()
+            
+            escolha = obter_escolha()
+            
+            if escolha == "1":
+                executar_coleta_urls()
+                pausar()
+                
+            elif escolha == "2":
+                executar_coleta_completa()
+                pausar()
+                
+            elif escolha == "3":
+                executar_teste_produto()
+                pausar()
+                
+            elif escolha == "4":
+                listar_arquivos_gerados()
+                pausar()
+                
+            elif escolha == "5":
+                limpar_dados_antigos()
+                pausar()
+                
+            elif escolha == "6":
+                mostrar_sobre()
+                pausar()
+                
+            elif escolha == "7":
+                print(f"\n{Cores.VERDE}👋 Obrigado por usar o Scraper Integral Médica!{Cores.RESET}")
+                print(f"{Cores.CIANO}🚀 Até a próxima!{Cores.RESET}\n")
+                break
+                
+            else:
+                print(f"\n{Cores.VERMELHO}❌ Opção inválida! Por favor, escolha entre 1-7{Cores.RESET}")
+                time.sleep(2)
+                
+    except KeyboardInterrupt:
+        print(f"\n\n{Cores.AMARELO}👋 Programa encerrado pelo usuário. Até logo!{Cores.RESET}\n")
+    except Exception as e:
+        print(f"\n{Cores.VERMELHO}❌ Erro inesperado: {e}{Cores.RESET}")
 
 if __name__ == "__main__":
     main() 
